@@ -1,7 +1,9 @@
 # reCAPTCHA.AspNetCore
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![nuget](https://img.shields.io/nuget/v/reCAPTCHA.AspNetCore.svg)](https://www.nuget.org/packages/reCAPTCHA.AspNetCore/)
 
-Google reCAPTCHA v2/v3 for .NET Standard 2.0, ASP.NET Core 2, and .NET Framework.
+Google reCAPTCHA for .NET Core 3.x. The older .NET Core 2.x version can be found [here](https://github.com/TimothyMeadows/reCAPTCHA.AspNetCore/tree/2.x).
+
+*Note: There have been changes to this libraries structure between versions 2, and 3. If you still wish to use version 2 it's been frozen at version 2.2.5 on nuget.*
 
 # Install
 
@@ -23,13 +25,8 @@ You must first have a **secret key** and a **site key** in order to use the reCA
 
 # Configure
 
-Choose how you want to configure the storage of your RecaptchaSettings. This contains your site key, and site secret so it's recommended to use secrets.json with Azure Key Vault (or similar setup). However you can also just add the section to your appconfig.json file.
+Choose how you want to configure the storage of your ```RecaptchaSettings```. This contains your site key, and site secret so it's recommended to use ```secrets.json``` with Azure Key Vault (or similar setup). However you can also just add the section to your ```appconfig.json``` file.
 
-# Versions
-
-- [v2](https://developers.google.com/recaptcha/docs/display)
-- [v2-invis](https://developers.google.com/recaptcha/docs/invisible)
-- [v3](https://developers.google.com/recaptcha/docs/v3)
 
 #### appconfig.json
 
@@ -37,8 +34,7 @@ Add the follow entry to the file make sure to paste in your secret key and site 
 ```json
 "RecaptchaSettings": {
     "SecretKey": "paste secret key here",
-    "SiteKey": "paste site key here",
-    "Version": "v2"
+    "SiteKey": "paste site key here"
   } 
 ```
 
@@ -49,20 +45,57 @@ This will open secrets.json. Add the follow entry to the file make sure to paste
 ```json
 "RecaptchaSettings": {
     "SecretKey": "paste secret key here",
-    "SiteKey": "paste site key here",
-    "Version": "v2"
+    "SiteKey": "paste site key here"
   } 
 ```
 
-Note: This will also require you to have a setup such as Azure Key Vault (or similar setup) when running in production.
+*Note: This will also require you to have a setup such as Azure Key Vault (or similar setup) when running in production.*
+
+#### Content Security Policy
+
+If you use a content security policy you can specify the values for script-src, and frame-src using the below example. Note that you should also make sure the Site option used for those who suffer from censorship matches the values you are using. The default value for Site is www.google.com.
+
+```json
+"RecaptchaSettings": {
+    "SecretKey": "paste secret key here",
+    "SiteKey": "paste site key here",
+    "ContentSecurityPolicy": "https://www.google.com/recaptcha/"
+  } 
+```
+
+This is an example for those that have to use recaptcha.net which would also have to change the site value:
+
+```json
+"RecaptchaSettings": {
+    "SecretKey": "paste secret key here",
+    "SiteKey": "paste site key here",
+    "Site": "www.recaptcha.net",
+    "ContentSecurityPolicy": "https://www.recaptcha.net/recaptcha/"
+  } 
+```
+
+# Versions
+
+These are the currently supported versions. Below is also the list of class names for T when using ```Html.Recaptcha<T>```
+
+- [RecaptchaV2Checkbox](https://developers.google.com/recaptcha/docs/display)
+- [RecaptchaV2Invisible](https://developers.google.com/recaptcha/docs/invisible)
+- [RecaptchaV3HiddenInput](https://developers.google.com/recaptcha/docs/v3)
 
 # Examples
 
-Open Startup.cs and add the following code as shown below to your ConfigureServices method:
+Open `Startup.cs` and add the following code as shown below to your `ConfigureServices` method:
 
 ```csharp
-services.Configure<RecaptchaSettings>(Configuration.GetSection("RecaptchaSettings"));
-services.AddTransient<IRecaptchaService, RecaptchaService>();
+// Add recaptcha and pass recaptcha configuration section
+services.AddRecaptcha(Configuration.GetSection("RecaptchaSettings"));
+
+// Or configure recaptcha via options
+services.AddRecaptcha(options =>
+{
+    options.SecretKey = "Your secret key";
+    options.SiteKey = "Your site key";
+});
 ```
 
 # Usage
@@ -76,20 +109,20 @@ In order to prevent having to copy and paste your site key all over your view fi
 You can then freely include the Recaptcha script inside of forms you wish to vaidate later in your controller (supports multiple forms).
 ```csharp
 @using (Html.BeginForm("SomeMethod", "SomeController")) {
-  @Html.Recaptcha(RecaptchaSettings.Value)
+  @(Html.Recaptcha<RecaptchaV2Checkbox>(RecaptchaSettings?.Value))
 }
 ```
 
 If you wish to trigger a JavaScript function on callback you can pass a method name to the Html helper.
 ```csharp
 @using (Html.BeginForm("SomeMethod", "SomeController")) {
-  @Html.Recaptcha(RecaptchaSettings.Value, successCallback:"methodName")
+  @(Html.Recaptcha<RecaptchaV2Checkbox>(RecaptchaSettings?.Value, new RecaptchaV2Checkbox { successCallback = "methodName" }))
 }
 ```
 ```html
 <script>
   function methodName() {
-    alert('Hello world!');
+    alert('caw caw caw!');
   }
 </script>
 ```
@@ -105,53 +138,38 @@ You can see a tested example of usage in the [Contact.cshtml](https://github.com
 
 # Validation
 
-In order to validate a recaptcha script being used in a form you will first need to inject the IRecaptchaService class into your controller using the code below:
-
-```csharp
-private IRecaptchaService _recaptcha;
-
-public SomeController(IRecaptchaService recaptcha)
-{
-  _recaptcha = recaptcha;
-}
-```
-
-You can validate the recaptcha attempts using the Validate method in the Recaptcha service in your HttpPost method:
+You can validate the recaptcha attempts using the ValidateRecaptchaAttribute on your HttpPost method:
 
 ```csharp
 [HttpPost]
+[ValidateRecaptcha]
 public async Task<IActionResult> SomeMethod(SomeModel model)
 {
-  var recaptcha = await _recaptcha.Validate(Request);
-    if (!recaptcha.success)
-        ModelState.AddModelError("", "There was an error validating recatpcha. Please try again!");
-
   return View(model);
 }
 ```
 
-WebApi users who do not have access to the original HttpRequest that created the recaptcha response can use the following method to validate response codes.
+You can also specify a minimum score you wish to accept when a success occurs:
 
 ```csharp
 [HttpPost]
+[ValidateRecaptcha(0.5)]
 public async Task<IActionResult> SomeMethod(SomeModel model)
 {
-  var recaptcha = await _recaptcha.Validate(model.ResponseCode);
-    if (!recaptcha.success)
-        ModelState.AddModelError("", "There was an error validating recatpcha. Please try again!");
-
-  return Json(model);
+  return View(model);
 }
 ```
-
-*Warning: This method DOES NOT check for anti-forgery like validating with HttpRequest does.*
 
 You can see a tested example of usage in the [HomeController.cs](https://github.com/TimothyMeadows/reCAPTCHA.AspNetCore/blob/master/reCAPTCHA.AspNetCore.Example/Controllers/HomeController.cs) controller. However you will need to configure it with your key information before running yourself. You should also take note of the allowed domains security policy in the Google Recaptcha docs.
 
 # Recaptcha.net
 
-Users who suffer from censorship concerns can now bypass the libraries default of www.google.com to www.recaptcha.net using the following static variable in the RecaptchaService class. You can best set this static during the ConfigureService method.
+Users who suffer from censorship concerns can now bypass the libraries default of www.google.com to www.recaptcha.net, or a proxy of there choosing using the following optional setting in ```appsettings.json```.
 
 ```csharp
-RecapthaService.UseRecapchaNet = true; // Default is false
+"RecaptchaSettings": {
+    "Site": "www.recaptcha.net",
+    "SecretKey": "paste secret key here",
+    "SiteKey": "paste site key here"
+  }
 ```

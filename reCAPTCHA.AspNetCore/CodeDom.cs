@@ -10,7 +10,6 @@ namespace System.CodeDom.Compiler
 
     public class CompilerErrorCollection : List<CompilerError>
     {
-
+        // This is a place holder class, it most likely should be included in dotnet core it's self but for some reason it is not.
     }
-
 }

@@ -1,21 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.2.3</Version>
+    <Version>3.0.3</Version>
     <Authors>Timothy D Meadows II</Authors>
-    <PackageLicenseUrl>https://github.com/TimothyMeadows/reCAPTCHA.AspNetCore/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TimothyMeadows/reCAPTCHA.AspNetCore/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TimothyMeadows/reCAPTCHA.AspNetCore/</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
-    <Description>Google reCAPTCHA 2/3 for ASP.NET Core 2, and, .NET Standard 2</Description>
+    <Description>Google reCAPTCHA ASP.NET Core 3</Description>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,36 +23,39 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Templates\v2.cs">
+    <Compile Update="Templates\RecaptchaV2Checkbox.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>v2.tt</DependentUpon>
+      <DependentUpon>RecaptchaV2Checkbox.tt</DependentUpon>
     </Compile>
-    <Compile Update="Templates\v2Invis.cs">
+    <Compile Update="Templates\RecaptchaV2Invisible.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>v2Invis.tt</DependentUpon>
+      <DependentUpon>RecaptchaV2Invisible.tt</DependentUpon>
     </Compile>
-    <Compile Update="Templates\v3.cs">
+    <Compile Update="Templates\RecaptchaV3HiddenInput.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
-      <DependentUpon>v3.tt</DependentUpon>
+      <DependentUpon>RecaptchaV3HiddenInput.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Templates\v2.tt">
+    <None Update="Templates\RecaptchaV2Checkbox.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>v2.cs</LastGenOutput>
+      <LastGenOutput>RecaptchaV2Checkbox.cs</LastGenOutput>
     </None>
-    <None Update="Templates\v2Invis.tt">
-      <LastGenOutput>v2Invis.cs</LastGenOutput>
+    <None Update="Templates\RecaptchaV2Invisible.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
+      <LastGenOutput>RecaptchaV2Invisible.cs</LastGenOutput>
     </None>
-    <None Update="Templates\v3.tt">
+    <None Update="Templates\RecaptchaV3HiddenInput.tt">
       <Generator>TextTemplatingFilePreprocessor</Generator>
-      <LastGenOutput>v3.cs</LastGenOutput>
+      <LastGenOutput>RecaptchaV3HiddenInput.cs</LastGenOutput>
+    </None>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
-
 </Project>

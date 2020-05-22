@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Numerics;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using reCAPTCHA.AspNetCore.Models;
-using reCAPTCHA.AspNetCore.Templates;
+using reCAPTCHA.AspNetCore.Versions;
 
 namespace reCAPTCHA.AspNetCore
 {
@@ -14,62 +12,50 @@ namespace reCAPTCHA.AspNetCore
         /// </summary>
         /// <param name="helper">Html helper object.</param>
         /// <param name="settings">Recaptcha settings needed to render.</param>
-        /// <param name="theme">Google Recaptcha theme default is light</param>
-        /// <param name="action">Google Recaptcha v3 <a href="https://developers.google.com/recaptcha/docs/v3#actions">Action</a></param>
-        /// <param name="language">Google Recaptcha <a href="https://developers.google.com/recaptcha/docs/language">Language Code</a></param>
-        /// <param name="id">Google Recaptcha v2-invis button id. This id can't be named submit due to a naming bug.</param>
-        /// <param name="successCallback">Google Recaptcha v2/v2-invis success callback method.</param>
-        /// <param name="errorCallback">Google Recaptcha v2/v2-invis error callback method.</param>
-        /// <param name="expiredCallback">Google Recaptcha v2/v2-invis expired callback method.</param>
-        /// <returns>HtmlString with Recaptcha elements</returns>
-        public static HtmlString Recaptcha(this IHtmlHelper helper, RecaptchaSettings settings, string theme = "light", string action = "homepage", string language = "en", string id = "recaptcha", string successCallback = null, string errorCallback = null, string expiredCallback = null)
+        /// <param name="model">Optional recaptcha version model. If not supplied a model with defaults will be created.</param>
+        /// <returns>HtmlString with Recaptcha elements.</returns>
+        public static HtmlString Recaptcha<T>(this IHtmlHelper helper, RecaptchaSettings settings, T model = default(T))
         {
-            if (string.IsNullOrEmpty(id))
-                throw new ArgumentException("id can't be null");
+            if (settings == null)
+                throw new ArgumentException("settings can't be null");
 
-            if (id.ToLower() == "submit")
-                throw new ArgumentException("id can't be named submit");
-
-            var uid = Guid.NewGuid();
-            var method = uid.ToString().Replace("-", "_");
-
-            switch (settings.Version)
+            var name = typeof(T)?.Name;
+            object instance;
+            if (model == null)
             {
-                default:
-                case "v2":
-                    return new HtmlString(new v2(new v2Model()
-                    {
-                        Settings = settings,
-                        Uid = uid,
-                        Method = method,
-                        Theme = theme,
-                        Language = language,
-                        SuccessCallback = successCallback,
-                        ErrorCallback = errorCallback,
-                        ExpiredCallback = expiredCallback
-                    }).TransformText());
-                case "v2-invis":
-                    return new HtmlString(new v2Invis(new v2Model()
-                    {
-                        Settings = settings,
-                        Id = id,
-                        Uid = uid,
-                        Method = method,
-                        Theme = theme,
-                        Language = language,
-                        SuccessCallback = successCallback,
-                        ErrorCallback = errorCallback,
-                        ExpiredCallback = expiredCallback
-                    }).TransformText());
-                case "v3":
-                    return new HtmlString(new v3(new v3Model()
-                    {
-                        Settings = settings,
-                        Uid = uid,
-                        Action = action,
-                        Language = language
-                    }).TransformText());
+                instance = name switch
+                {
+                    nameof(RecaptchaV2Checkbox) => new RecaptchaV2Checkbox { Settings = settings },
+                    nameof(RecaptchaV2Invisible) => new RecaptchaV2Invisible { Settings = settings },
+                    nameof(RecaptchaV3HiddenInput) => new RecaptchaV3HiddenInput { Settings = settings },
+                    _ => throw new ArgumentException(
+                        $"Unknown type '{name}' passed as recaptcha version. Please use a valid type for T when using the Recaptcha method.")
+                };
             }
+            else
+                instance = Convert.ChangeType(model, typeof(T));
+
+            string body;
+            switch (name)
+            {
+                case nameof(RecaptchaV2Checkbox):
+                    var v2Checkbox = (RecaptchaV2Checkbox)instance;
+                    body = new Templates.RecaptchaV2Checkbox(v2Checkbox).TransformText();
+                    break;
+                case nameof(RecaptchaV2Invisible):
+                    var v2Invisible = (RecaptchaV2Invisible)instance;
+                    body = new Templates.RecaptchaV2Invisible(v2Invisible).TransformText();
+                    break;
+                case nameof(RecaptchaV3HiddenInput):
+                    var v3 = (RecaptchaV3HiddenInput)instance;
+                    body = new Templates.RecaptchaV3HiddenInput(v3).TransformText();
+                    break;
+                default:
+                    body = string.Empty;
+                    break;
+            }
+
+            return new HtmlString(body);
         }
     }
 }

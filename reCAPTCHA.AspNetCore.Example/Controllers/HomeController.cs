@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using reCAPTCHA.AspNetCore.Attributes;
 using reCAPTCHA.AspNetCore.Example.Models;
 
 namespace reCAPTCHA.AspNetCore.Example.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly IRecaptchaService _recaptcha;
-
         public HomeController(IRecaptchaService recaptcha)
         {
-            _recaptcha = recaptcha;
         }
 
         public IActionResult Index()
@@ -22,12 +17,6 @@ namespace reCAPTCHA.AspNetCore.Example.Controllers
             return View();
         }
 
-        public IActionResult About()
-        {
-            ViewData["Message"] = "Your application description page.";
-
-            return View();
-        }
 
         public IActionResult Contact()
         {
@@ -37,13 +26,10 @@ namespace reCAPTCHA.AspNetCore.Example.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Contact(ContactModel model)
+        [ValidateRecaptcha(0.5)]
+        public IActionResult Contact(ContactModel model)
         {
             ViewData["Message"] = "Your contact page.";
-
-            var recaptcha = await _recaptcha.Validate(Request);
-            if (!recaptcha.success)
-                ModelState.AddModelError("Recaptcha", "There was an error validating recatpcha. Please try again!");
 
             return View(!ModelState.IsValid ? model : new ContactModel());
         }
