@@ -19,11 +19,27 @@ namespace reCAPTCHA.AspNetCore.Attributes
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            var recaptcha = await _recaptcha.Validate(context.HttpContext.Request);
-            if (!recaptcha.success || recaptcha.score != 0 && recaptcha.score < _minimumScore)
-                context.ModelState.AddModelError("Recaptcha", _errorMessage);
-
+            await OnExecution(context);
             await next();
+        }
+
+        private async Task OnExecution(FilterContext context)
+        {
+            var recaptcha = await _recaptcha.Validate(context.HttpContext.Request);
+            if (!recaptcha.success || recaptcha.score < _minimumScore)
+                context.ModelState.AddModelError("", _errorMessage);
+        }
+
+        public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+        {
+            if (context.HandlerMethod.HttpMethod == "Post")
+                await OnExecution(context);
+            await next();
+        }
+
+        public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context)
+        {
+            return Task.CompletedTask;
         }
     }
 }

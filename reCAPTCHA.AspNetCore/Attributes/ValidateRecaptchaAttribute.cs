@@ -7,7 +7,7 @@ namespace reCAPTCHA.AspNetCore.Attributes
     /// <summary>
     /// Validates Recaptcha submitted by a form using: @Html.Recaptcha(RecaptchaSettings.Value)
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = false)]
     public class ValidateRecaptchaAttribute : Attribute, IFilterFactory
     {
         public bool IsReusable => true;
@@ -20,7 +20,7 @@ namespace reCAPTCHA.AspNetCore.Attributes
         /// </summary>
         /// <param name="score">The minimum score you wish to be acceptable for a success.</param>
         /// <param name="errorMessage">Error message you want added to validation model.</param>
-        public ValidateRecaptchaAttribute(double score = 0, string errorMessage = "There was an error validating the google recaptcha response. Please try again, or contact the site owner.")
+        public ValidateRecaptchaAttribute(double score = 0, string errorMessage = "There was an error validating the google recaptcha response. Please try again, or contact us.")
         {
             _minimumScore = score;
             _errorMessage = errorMessage;
