@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using reCAPTCHA.AspNetCore.Attributes;
 using reCAPTCHA.AspNetCore.Example.Models;
